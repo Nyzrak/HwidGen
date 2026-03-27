@@ -39,6 +39,11 @@ print(hwid)  # e.g. 3b4c1a9f2e...
 a3f1d9c72e4b08f6a1c3e5d7b9f2a4c6e8d0b2f4a6c8e0d2b4f6a8c0e2d4f6b8
 ```
 
+## For what is this useful?
+
+If you need some kind of verification you can use this HardwareId Generator as a device verification.
+You can safely keep them in your db for example since they are already SHA256 hashed.
+
 ## Notes
 
 - The HWID will change if you replace your CPU, reformat your C: drive, or swap your physical disk.
