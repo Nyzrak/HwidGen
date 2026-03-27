@@ -1,7 +1,7 @@
 import hashlib
 import wmi
 
-
+decrypted = ''
 class HWIDGenerator:
     @staticmethod
     def get_hwid() -> str:
