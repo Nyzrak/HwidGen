@@ -1,10 +1,13 @@
 # HWIDGenerator
 
-A lightweight Python utility that generates a unique hardware fingerprint for Windows machines.
+A Python utility that generates a unique hardware ID (HWID) for a device. It works on Windows, macOS and Linux! The HWID is a SHA-256 hash made from hardware-specific values so it's unique per machine.
 
 ## How It Works
 
-Collects three hardware identifiers via WMI (Windows Management Instrumentation) and combines them into a single SHA-256 hash:
+It collects some hardware info depending on your OS and hashes it all together with SHA-256. The result is always a 64-character hex string.
+
+### Windows
+Uses WMI to grab three things:
 
 | Source | WMI Class | Property |
 |--------|-----------|----------|
@@ -12,17 +15,28 @@ Collects three hardware identifiers via WMI (Windows Management Instrumentation)
 | C: Drive (logical) | `Win32_LogicalDisk` | `VolumeSerialNumber` |
 | Physical Disk | `Win32_PhysicalMedia` | `SerialNumber` |
 
-The three values are concatenated and hashed with SHA-256, returning a 64-character hex string.
+### macOS
+Uses `ioreg` and `diskutil` to get:
+- `IOPlatformUUID`
+- `IOPlatformSerialNumber`
+- Volume UUID
+
+### Linux
+Uses `/etc/machine-id` and `lsblk` to get:
+- Machine ID from `/etc/machine-id`
+- Disk serial number
+- Partition table UUID (PTUUID)
+
+It automatically detects your primary disk so it works with both SATA (`/dev/sda`) and NVMe (`/dev/nvme0n1`) drives. No sudo needed!
 
 ## Requirements
 
-- Windows only (WMI is Windows-specific)
 - Python 3.x
-
-Install production dependencies:
+- On Linux and macOS no extra packages are needed, everything uses the Python standard library
+- On Windows the `wmi` package is required:
 
 ```
-pip install -r requirements/requirements.txt
+pip install wmi
 ```
 
 Install development dependencies (testing, linting):
@@ -37,21 +51,21 @@ pip install -r requirements/requirements_dev.txt
 from src.HwidGenerator import HWIDGenerator
 
 hwid = HWIDGenerator.get_hwid()
-print(hwid)  # e.g. 3b4c1a9f2e...
+print(hwid)  # e.g. 884618235043ffce89d87862abf8882e...
 ```
 
 ## Example Output
 
 ```
-a3f1d9c72e4b08f6a1c3e5d7b9f2a4c6e8d0b2f4a6c8e0d2b4f6a8c0e2d4f6b8
+884618235043ffce89d87862abf8882eb5294517f107f0f980bec789258e8a98
 ```
 
-## For what is this useful?
+## What is this useful for?
 
-If you need some kind of verification you can use this HardwareId Generator as a device verification.
-You can safely keep them in your db for example since they are already SHA256 hashed.
+If you want to verify that a user is running your software on the same machine (like a license check), you can generate their HWID and store it in your database. Since it's already hashed you don't expose any raw hardware info.
 
 ## Notes
 
-- The HWID will change if you replace your CPU, reformat your C: drive, or swap your physical disk.
-- `VolumeSerialNumber` is a Windows-assigned partition ID and can change on reformat. `SerialNumber` from `Win32_PhysicalMedia` is the hardware serial burned into the drive.
+- The HWID will change if you replace major hardware components (CPU, disk, etc.)
+- On Windows, `VolumeSerialNumber` can change if you reformat your C: drive. `SerialNumber` from `Win32_PhysicalMedia` is the actual hardware serial burned into the drive.
+- On Linux, `lsblk` is used without sudo — this works on most systems but on some hardware the serial might be empty depending on the driver.

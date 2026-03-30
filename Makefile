@@ -1,5 +1,11 @@
 .PHONY: help test lint format
 
+ifeq ($(OS),Windows_NT)
+PYTHON = .venv/Scripts/python.exe
+else
+PYTHON = .venv/bin/python
+endif
+
 help:
 	@echo "Available targets:"
 	@echo "  test    - Run pytest on the tests/ directory"
@@ -7,10 +13,10 @@ help:
 	@echo "  format  - Run ruff formatter"
 
 test:
-	.venv/Scripts/python.exe -m pytest tests/
+	$(PYTHON) -m pytest tests/
 
 lint:
-	.venv/Scripts/python.exe -m ruff check .
+	$(PYTHON) -m ruff check .
 
 format:
-	.venv/Scripts/python.exe -m ruff format .
+	$(PYTHON) -m ruff format .

@@ -11,9 +11,16 @@ __pycache__/
 # Virtual environments
 .venv/
 .venv1/
+.venv*/
 
 # pytest
 .pytest_cache/
+.pytest_cache/v/
+
+# Linux
+*~
+.DS_Store
+*.so
 
 # Distribution / build
 dist/
