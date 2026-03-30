@@ -1,5 +1,5 @@
 from hashlib import sha256
-from wmi import WMI
+import os, platform, subprocess, re
 
 
 class HWIDGenerator:
@@ -17,6 +17,7 @@ class HWIDGenerator:
 
     @staticmethod
     def _get_windows_hwid() -> str:
+        from wmi import WMI
         wmi_data = WMI()
         cpu_id = wmi_data.Win32_Processor()[0].ProcessorId.strip().encode("utf-8")
         drive_serial = (
@@ -32,8 +33,25 @@ class HWIDGenerator:
 
     @staticmethod
     def _get_mac_hwid() -> str:
-        command = 'sysctl -n machdep.cpu.brand_string'
+        cpu_id = (
+            subprocess.check_output(
+                'ioreg -rd1 -c IOPlatformExpertDevice | grep IOPlatformUUID',
+                shell=True
+            ).strip()
+        )
+        disk_serial = subprocess.check_output(['diskutil', 'info', '/']).strip()
+        drive_serial = (
+            subprocess.check_output(
+                'system_profiler SPStorageDataType | grep "Serial Number"',
+                shell=True).strip()
+        )
+
+        return sha256(cpu_id + drive_serial + disk_serial).hexdigest()
 
     @staticmethod
     def _get_linux_hwid() -> str:
-        pass
+        cpu_id = subprocess.check_output('cat /etc/machine-id', shell=True).strip()
+        disk_serial = subprocess.check_output('lsblk -o SERIAL -d -n /dev/sda', shell=True).strip()
+        drive_serial = subprocess.check_output(' lsblk -o UUID -d -n /dev/sda', shell=True).strip()
+
+        return sha256(cpu_id + drive_serial + disk_serial).hexdigest()
