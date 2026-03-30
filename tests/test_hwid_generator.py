@@ -57,14 +57,15 @@ class TestHwidGeneratorLinux(TestCase):
     def test_get_hwid(self, mock_check_output, _mock_platform):
         mock_check_output.side_effect = [
             b"abcdef1234567890abcdef1234567890",  # /etc/machine-id
+            b"/dev/nvme0n1",                       # lsblk primary disk detection
             b"SERIALXYZ",                          # lsblk SERIAL
-            b"uuid-0000-1111",                     # lsblk UUID
+            b"ptuuid-0000-1111",                   # lsblk PTUUID
         ]
 
         hwid = HWIDGenerator.get_hwid()
-        expected = sha256(b"abcdef1234567890abcdef1234567890" + b"uuid-0000-1111" + b"SERIALXYZ").hexdigest()
+        expected = sha256(b"abcdef1234567890abcdef1234567890" + b"ptuuid-0000-1111" + b"SERIALXYZ").hexdigest()
 
-        self.assertEqual(mock_check_output.call_count, 3)
+        self.assertEqual(mock_check_output.call_count, 4)
         self.assertEqual(len(hwid), 64)
         self.assertRegex(hwid, r"^[0-9a-f]{64}$")
         self.assertEqual(expected, hwid)
