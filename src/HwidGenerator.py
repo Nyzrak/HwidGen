@@ -1,7 +1,6 @@
 import hashlib
 import wmi
 
-decrypted = ''
 class HWIDGenerator:
     @staticmethod
     def get_hwid() -> str:
@@ -12,3 +11,4 @@ class HWIDGenerator:
 
         return hashlib.sha256(cpu_id + drive_serial + disk_serial).hexdigest()
 
+print(HWIDGenerator.get_hwid())
