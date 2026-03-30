@@ -1,19 +1,21 @@
 from hashlib import sha256
-import os, platform, subprocess, re
+import platform
+import re
+import subprocess
 
 
 class HWIDGenerator:
     @staticmethod
     def get_hwid() -> str:
-        os = platform.system()
-        if 'Windows' == os:
+        system = platform.system()
+        if 'Windows' == system:
             return HWIDGenerator._get_windows_hwid()
-        elif 'Darwin' == os:
+        elif 'Darwin' == system:
             return HWIDGenerator._get_mac_hwid()
-        elif 'Linux' == os:
+        elif 'Linux' == system:
             return HWIDGenerator._get_linux_hwid()
         else:
-            raise NotImplementedError(f'Unsupported OS: {os}')
+            raise NotImplementedError(f'Unsupported OS: {system}')
 
     @staticmethod
     def _get_windows_hwid() -> str:
@@ -33,20 +35,18 @@ class HWIDGenerator:
 
     @staticmethod
     def _get_mac_hwid() -> str:
-        cpu_id = (
-            subprocess.check_output(
-                'ioreg -rd1 -c IOPlatformExpertDevice | grep IOPlatformUUID',
-                shell=True
-            ).strip()
-        )
-        disk_serial = subprocess.check_output(['diskutil', 'info', '/']).strip()
-        drive_serial = (
-            subprocess.check_output(
-                'system_profiler SPStorageDataType | grep "Serial Number"',
-                shell=True).strip()
-        )
+        ioreg_out = subprocess.check_output(
+            'ioreg -rd1 -c IOPlatformExpertDevice',
+            shell=True
+        ).decode()
+        platform_uuid = re.search(r'"IOPlatformUUID"\s*=\s*"([^"]+)"', ioreg_out).group(1).encode()
+        platform_serial = re.search(r'"IOPlatformSerialNumber"\s*=\s*"([^"]+)"', ioreg_out).group(1).encode()
+        volume_uuid = subprocess.check_output(
+            'diskutil info / | grep "Volume UUID"',
+            shell=True
+        ).strip()
 
-        return sha256(cpu_id + drive_serial + disk_serial).hexdigest()
+        return sha256(platform_uuid + platform_serial + volume_uuid).hexdigest()
 
     @staticmethod
     def _get_linux_hwid() -> str:
