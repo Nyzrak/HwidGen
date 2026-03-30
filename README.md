@@ -18,10 +18,17 @@ The three values are concatenated and hashed with SHA-256, returning a 64-charac
 
 - Windows only (WMI is Windows-specific)
 - Python 3.x
-- [`wmi`](https://pypi.org/project/WMI/) package
+
+Install production dependencies:
 
 ```
-pip install wmi
+pip install -r requirements/requirements.txt
+```
+
+Install development dependencies (testing, linting):
+
+```
+pip install -r requirements/requirements_dev.txt
 ```
 
 ## Usage
