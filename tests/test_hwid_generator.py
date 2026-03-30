@@ -8,9 +8,15 @@ class TestHwidGeneratorWindows(TestCase):
     @patch("platform.system", return_value="Windows")
     def test_get_hwid(self, _mock_platform):
         mock_wmi_instance = MagicMock()
-        mock_wmi_instance.Win32_Processor.return_value = [MagicMock(ProcessorId="CPU123")]
-        mock_wmi_instance.Win32_LogicalDisk.return_value = [MagicMock(VolumeSerialNumber="VOL456")]
-        mock_wmi_instance.Win32_PhysicalMedia.return_value = [MagicMock(SerialNumber="DISK789")]
+        mock_wmi_instance.Win32_Processor.return_value = [
+            MagicMock(ProcessorId="CPU123")
+        ]
+        mock_wmi_instance.Win32_LogicalDisk.return_value = [
+            MagicMock(VolumeSerialNumber="VOL456")
+        ]
+        mock_wmi_instance.Win32_PhysicalMedia.return_value = [
+            MagicMock(SerialNumber="DISK789")
+        ]
 
         mock_wmi_module = MagicMock(WMI=MagicMock(return_value=mock_wmi_instance))
 
@@ -32,7 +38,7 @@ class TestHwidGeneratorMac(TestCase):
         b'      "IOPlatformUUID" = "UUID-1234"\n'
         b'      "IOPlatformSerialNumber" = "SN-ABCD"\n'
     )
-    VOLUME_UUID_LINE = b'   Volume UUID:               VOL-UUID-5678'
+    VOLUME_UUID_LINE = b"   Volume UUID:               VOL-UUID-5678"
 
     @patch("platform.system", return_value="Darwin")
     @patch("subprocess.check_output")
@@ -43,7 +49,9 @@ class TestHwidGeneratorMac(TestCase):
         ]
 
         hwid = HWIDGenerator.get_hwid()
-        expected = sha256(b"UUID-1234" + b"SN-ABCD" + self.VOLUME_UUID_LINE.strip()).hexdigest()
+        expected = sha256(
+            b"UUID-1234" + b"SN-ABCD" + self.VOLUME_UUID_LINE.strip()
+        ).hexdigest()
 
         self.assertEqual(mock_check_output.call_count, 2)
         self.assertEqual(len(hwid), 64)
@@ -57,13 +65,15 @@ class TestHwidGeneratorLinux(TestCase):
     def test_get_hwid(self, mock_check_output, _mock_platform):
         mock_check_output.side_effect = [
             b"abcdef1234567890abcdef1234567890",  # /etc/machine-id
-            b"/dev/nvme0n1",                       # lsblk primary disk detection
-            b"SERIALXYZ",                          # lsblk SERIAL
-            b"ptuuid-0000-1111",                   # lsblk PTUUID
+            b"/dev/nvme0n1",  # lsblk primary disk detection
+            b"SERIALXYZ",  # lsblk SERIAL
+            b"ptuuid-0000-1111",  # lsblk PTUUID
         ]
 
         hwid = HWIDGenerator.get_hwid()
-        expected = sha256(b"abcdef1234567890abcdef1234567890" + b"ptuuid-0000-1111" + b"SERIALXYZ").hexdigest()
+        expected = sha256(
+            b"abcdef1234567890abcdef1234567890" + b"ptuuid-0000-1111" + b"SERIALXYZ"
+        ).hexdigest()
 
         self.assertEqual(mock_check_output.call_count, 4)
         self.assertEqual(len(hwid), 64)
