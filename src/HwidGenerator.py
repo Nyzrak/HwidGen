@@ -24,16 +24,23 @@ class HWIDGenerator:
         script = (
             "$cpu = (Get-CimInstance Win32_Processor).ProcessorId;"
             "$vol = (Get-CimInstance Win32_LogicalDisk -Filter \"DeviceID='C:'\").VolumeSerialNumber;"
-            "Write-Output \"$cpu`n$vol\""
+            'Write-Output "$cpu`n$vol"'
         )
-        output = subprocess.check_output(
-            ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
-            creationflags=0x08000000,  # CREATE_NO_WINDOW
-        ).decode().strip().splitlines()
+        output = (
+            subprocess.check_output(
+                ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
+                creationflags=0x08000000,  # CREATE_NO_WINDOW
+            )
+            .decode()
+            .strip()
+            .splitlines()
+        )
         cpu_id = output[0].strip().encode()
         drive_serial = output[1].strip().encode()
 
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography")
+        key = winreg.OpenKey(
+            winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography"
+        )
         machine_guid = winreg.QueryValueEx(key, "MachineGuid")[0].encode()
         winreg.CloseKey(key)
 
