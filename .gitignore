@@ -1,2 +1,21 @@
+# IDE
 .idea/
 *.iml
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+.venv1/
+
+# pytest
+.pytest_cache/
+
+# Distribution / build
+dist/
+build/
+*.egg-info/
