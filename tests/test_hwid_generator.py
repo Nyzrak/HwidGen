@@ -6,28 +6,19 @@ from unittest.mock import patch, MagicMock
 
 class TestHwidGeneratorWindows(TestCase):
     @patch("platform.system", return_value="Windows")
-    def test_get_hwid(self, _mock_platform):
-        mock_wmi_instance = MagicMock()
-        mock_wmi_instance.Win32_Processor.return_value = [
-            MagicMock(ProcessorId="CPU123")
-        ]
-        mock_wmi_instance.Win32_LogicalDisk.return_value = [
-            MagicMock(VolumeSerialNumber="VOL456")
-        ]
-        mock_wmi_instance.Win32_PhysicalMedia.return_value = [
-            MagicMock(SerialNumber="DISK789")
-        ]
+    @patch("subprocess.check_output", return_value=b"CPU123\nVOL456")
+    def test_get_hwid(self, mock_check_output, _mock_platform):
+        mock_winreg = MagicMock()
+        mock_winreg.QueryValueEx.return_value = ("GUID789", 1)
 
-        mock_wmi_module = MagicMock(WMI=MagicMock(return_value=mock_wmi_instance))
-
-        with patch.dict("sys.modules", {"wmi": mock_wmi_module}):
+        with patch.dict("sys.modules", {"winreg": mock_winreg}):
             hwid = HWIDGenerator.get_hwid()
 
-        expected = sha256(b"CPU123" + b"VOL456" + b"DISK789").hexdigest()
+        expected = sha256(b"CPU123" + b"VOL456" + b"GUID789").hexdigest()
 
-        mock_wmi_instance.Win32_Processor.assert_called_once()
-        mock_wmi_instance.Win32_LogicalDisk.assert_called_once()
-        mock_wmi_instance.Win32_PhysicalMedia.assert_called_once()
+        mock_check_output.assert_called_once()
+        mock_winreg.OpenKey.assert_called_once()
+        mock_winreg.QueryValueEx.assert_called_once()
         self.assertEqual(len(hwid), 64)
         self.assertRegex(hwid, r"^[0-9a-f]{64}$")
         self.assertEqual(expected, hwid)
