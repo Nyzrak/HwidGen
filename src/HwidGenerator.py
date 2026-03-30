@@ -51,7 +51,13 @@ class HWIDGenerator:
     @staticmethod
     def _get_linux_hwid() -> str:
         cpu_id = subprocess.check_output('cat /etc/machine-id', shell=True).strip()
-        disk_serial = subprocess.check_output('lsblk -o SERIAL -d -n /dev/sda', shell=True).strip()
-        drive_serial = subprocess.check_output(' lsblk -o UUID -d -n /dev/sda', shell=True).strip()
+
+        primary_disk = subprocess.check_output(
+            "lsblk -o NAME,TYPE -dn | awk '$2==\"disk\" {print \"/dev/\"$1; exit}'",
+            shell=True
+        ).strip().decode()
+
+        disk_serial = subprocess.check_output(f'lsblk -o SERIAL -d -n {primary_disk}', shell=True).strip()
+        drive_serial = subprocess.check_output(f'lsblk -o PTUUID -d -n {primary_disk}', shell=True).strip()
 
         return sha256(cpu_id + drive_serial + disk_serial).hexdigest()
