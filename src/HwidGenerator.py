@@ -86,3 +86,7 @@ class HWIDGenerator:
         ).strip()
 
         return sha256(cpu_id + drive_serial + disk_serial).hexdigest()
+
+
+if __name__ == "__main__":
+    print(HWIDGenerator.get_hwid())

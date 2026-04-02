@@ -77,3 +77,21 @@ class TestHwidGeneratorUnsupportedOS(TestCase):
     def test_raises_not_implemented(self, _mock_platform):
         with self.assertRaises(NotImplementedError):
             HWIDGenerator.get_hwid()
+
+
+class TestHwidGeneratorMain(TestCase):
+    @patch("platform.system", return_value="Linux")
+    @patch("subprocess.check_output")
+    def test_main_prints_hwid(self, mock_check_output, _mock_platform):
+        mock_check_output.side_effect = [
+            b"abcdef1234567890abcdef1234567890",
+            b"/dev/nvme0n1",
+            b"SERIALXYZ",
+            b"ptuuid-0000-1111",
+        ]
+        import io
+        import runpy
+        with patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            runpy.run_path("src/HwidGenerator.py", run_name="__main__")
+        output = mock_stdout.getvalue().strip()
+        self.assertRegex(output, r"^[0-9a-f]{64}$")
