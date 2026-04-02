@@ -1,3 +1,3 @@
-from .HwidGenerator import HWIDGenerator
+from .HwidGenerator import HWIDGenerator, HWIDError
 
-__all__ = ["HWIDGenerator"]
+__all__ = ["HWIDGenerator", "HWIDError"]

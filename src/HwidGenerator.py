@@ -4,6 +4,10 @@ import re
 import subprocess
 
 
+class HWIDError(Exception):
+    pass
+
+
 class HWIDGenerator:
     @staticmethod
     def get_hwid() -> str:
