@@ -54,6 +54,21 @@ class TestHwidGeneratorMac(TestCase):
 class TestHwidGeneratorLinux(TestCase):
     @patch("platform.system", return_value="Linux")
     @patch("subprocess.check_output")
+    def test_disk_detection_uses_root_mountpoint(self, mock_check_output, _mock_platform):
+        # Verifies the disk detection command finds the disk via root mountpoint,
+        # not by picking the first disk alphabetically
+        mock_check_output.side_effect = [
+            b"abcdef1234567890abcdef1234567890",  # /etc/machine-id
+            b"/dev/nvme0n1",                       # disk detection
+            b"SERIALXYZ",                          # lsblk SERIAL
+            b"ptuuid-0000-1111",                   # lsblk PTUUID
+        ]
+        HWIDGenerator.get_hwid()
+        disk_detection_cmd = mock_check_output.call_args_list[1][0][0]
+        self.assertIn("findmnt", disk_detection_cmd)
+
+    @patch("platform.system", return_value="Linux")
+    @patch("subprocess.check_output")
     def test_get_hwid(self, mock_check_output, _mock_platform):
         mock_check_output.side_effect = [
             b"abcdef1234567890abcdef1234567890",  # /etc/machine-id
