@@ -4,16 +4,23 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hwidgen"
-version = "1.0.0"
+version = "1.0.1"
 description = "Generate a unique hardware ID (HWID) for Windows, macOS, and Linux"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE.md"]
 requires-python = ">=3.8"
+authors = [
+    { name = "Nyzrak" }
+]
 classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Nyzrak/HwidGen"
+Repository = "https://github.com/Nyzrak/HwidGen"
 
 [project.scripts]
 hwidgen = "hwidgen.__main__:main"
