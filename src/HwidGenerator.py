@@ -59,9 +59,14 @@ class HWIDGenerator:
             .group(1)
             .encode()
         )
-        volume_uuid = subprocess.check_output(
-            'diskutil info / | grep "Volume UUID"', shell=True
-        ).strip()
+        volume_uuid = (
+            subprocess.check_output(
+                'diskutil info / | grep "Volume UUID"', shell=True
+            )
+            .decode()
+            .split()[-1]
+            .encode()
+        )
 
         return sha256(platform_uuid + platform_serial + volume_uuid).hexdigest()
 
@@ -78,14 +83,14 @@ class HWIDGenerator:
             .decode()
         )
 
-        disk_serial = subprocess.check_output(
+        serial = subprocess.check_output(
             ["lsblk", "-o", "SERIAL", "-d", "-n", primary_disk]
         ).strip()
-        drive_serial = subprocess.check_output(
+        ptuuid = subprocess.check_output(
             ["lsblk", "-o", "PTUUID", "-d", "-n", primary_disk]
         ).strip()
 
-        return sha256(cpu_id + drive_serial + disk_serial).hexdigest()
+        return sha256(cpu_id + ptuuid + serial).hexdigest()
 
 
 if __name__ == "__main__":

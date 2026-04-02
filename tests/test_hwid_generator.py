@@ -41,7 +41,7 @@ class TestHwidGeneratorMac(TestCase):
 
         hwid = HWIDGenerator.get_hwid()
         expected = sha256(
-            b"UUID-1234" + b"SN-ABCD" + self.VOLUME_UUID_LINE.strip()
+            b"UUID-1234" + b"SN-ABCD" + b"VOL-UUID-5678"
         ).hexdigest()
 
         self.assertEqual(mock_check_output.call_count, 2)
