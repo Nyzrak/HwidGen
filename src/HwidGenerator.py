@@ -38,11 +38,10 @@ class HWIDGenerator:
         cpu_id = output[0].strip().encode()
         drive_serial = output[1].strip().encode()
 
-        key = winreg.OpenKey(
+        with winreg.OpenKey(
             winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography"
-        )
-        machine_guid = winreg.QueryValueEx(key, "MachineGuid")[0].encode()
-        winreg.CloseKey(key)
+        ) as key:
+            machine_guid = winreg.QueryValueEx(key, "MachineGuid")[0].encode()
 
         return sha256(cpu_id + drive_serial + machine_guid).hexdigest()
 
