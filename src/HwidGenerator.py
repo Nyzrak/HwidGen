@@ -85,13 +85,20 @@ class HWIDGenerator:
             .strip()
             .decode()
         )
+        if not primary_disk:
+            raise HWIDError("No primary disk detected")
 
         serial = subprocess.check_output(
             ["lsblk", "-o", "SERIAL", "-d", "-n", primary_disk]
         ).strip()
+        if not serial:
+            raise HWIDError("Could not read disk serial — may require elevated privileges")
+
         ptuuid = subprocess.check_output(
             ["lsblk", "-o", "PTUUID", "-d", "-n", primary_disk]
         ).strip()
+        if not ptuuid:
+            raise HWIDError("Could not read partition UUID — unsupported disk configuration")
 
         return sha256(cpu_id + ptuuid + serial).hexdigest()
 

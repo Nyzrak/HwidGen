@@ -1,5 +1,5 @@
 from hashlib import sha256
-from src.HwidGenerator import HWIDGenerator
+from src.HwidGenerator import HWIDGenerator, HWIDError
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 from subprocess import CalledProcessError
@@ -187,6 +187,43 @@ class TestHwidGeneratorLinuxFailures(TestCase):
             CalledProcessError(1, "lsblk"),       # disk detection fails
         ]
         with self.assertRaises(CalledProcessError):
+            HWIDGenerator.get_hwid()
+
+    @patch("platform.system", return_value="Linux")
+    @patch("subprocess.check_output")
+    def test_no_primary_disk_raises_hwid_error(self, mock_check_output, _mock_platform):
+        # lsblk finds no disk (e.g. inside a container with no block devices)
+        mock_check_output.side_effect = [
+            b"abcdef1234567890abcdef1234567890",  # machine-id
+            b"",                                   # no disk found
+        ]
+        with self.assertRaises(HWIDError):
+            HWIDGenerator.get_hwid()
+
+    @patch("platform.system", return_value="Linux")
+    @patch("subprocess.check_output")
+    def test_empty_serial_raises_hwid_error(self, mock_check_output, _mock_platform):
+        # lsblk returns empty serial (common without root on many drivers)
+        mock_check_output.side_effect = [
+            b"abcdef1234567890abcdef1234567890",  # machine-id
+            b"/dev/sda",                           # disk found
+            b"",                                   # serial empty
+            b"ptuuid-0000-1111",                  # ptuuid fine
+        ]
+        with self.assertRaises(HWIDError):
+            HWIDGenerator.get_hwid()
+
+    @patch("platform.system", return_value="Linux")
+    @patch("subprocess.check_output")
+    def test_empty_ptuuid_raises_hwid_error(self, mock_check_output, _mock_platform):
+        # lsblk returns empty PTUUID (e.g. LVM, loop devices, some VM configs)
+        mock_check_output.side_effect = [
+            b"abcdef1234567890abcdef1234567890",  # machine-id
+            b"/dev/sda",                           # disk found
+            b"SERIALXYZ",                          # serial fine
+            b"",                                   # ptuuid empty
+        ]
+        with self.assertRaises(HWIDError):
             HWIDGenerator.get_hwid()
 
 
