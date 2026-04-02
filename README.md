@@ -45,7 +45,7 @@ pip install -r requirements/requirements_dev.txt
 ## Usage
 
 ```python
-from src.HwidGenerator import HWIDGenerator
+from hwidgen import HWIDGenerator
 
 hwid = HWIDGenerator.get_hwid()
 print(hwid)  # e.g. 884618235043ffce89d87862abf8882e...
