@@ -1,4 +1,4 @@
-.PHONY: help test lint format build publish
+.PHONY: help test lint format build publish ci
 
 ifeq ($(OS),Windows_NT)
 PYTHON = .venv/Scripts/python.exe
@@ -13,6 +13,7 @@ help:
 	@echo "  format  - Run ruff formatter"
 	@echo "  build   - Clean and build dist packages"
 	@echo "  publish - Build and upload to PyPI"
+	@echo "  ci      - Run lint and tests"
 
 test:
 	$(PYTHON) -m pytest tests/
@@ -29,3 +30,5 @@ build:
 
 publish: build
 	$(PYTHON) -m twine upload dist/*
+
+ci: lint test
