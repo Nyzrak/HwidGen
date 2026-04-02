@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hwidgen"
+version = "1.0.0"
+description = "Generate a unique hardware ID (HWID) for Windows, macOS, and Linux"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE.md"]
+requires-python = ">=3.8"
+classifiers = [
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+]
+
+[project.scripts]
+hwidgen = "hwidgen.__main__:main"
+
+[tool.setuptools]
+packages = ["hwidgen"]
+
+[tool.setuptools.package-dir]
+hwidgen = "src"
