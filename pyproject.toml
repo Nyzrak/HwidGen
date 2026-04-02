@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hwidgen"
-version = "1.0.1"
+version = "1.0.2"
 description = "Generate a unique hardware ID (HWID) for Windows, macOS, and Linux"
 readme = "README.md"
 license = "MIT"
