@@ -148,6 +148,26 @@ class TestHwidGeneratorWindowsFailures(TestCase):
             with self.assertRaises(CalledProcessError):
                 HWIDGenerator.get_hwid()
 
+    @patch("platform.system", return_value="Windows")
+    @patch("subprocess.check_output", return_value=b"CPU123\nVOL456")
+    def test_registry_open_key_failure_raises(self, _mock_check_output, _mock_platform):
+        # Registry key doesn't exist (e.g. non-standard Windows install)
+        mock_winreg = MagicMock()
+        mock_winreg.OpenKey.side_effect = OSError("Registry key not found")
+        with patch.dict("sys.modules", {"winreg": mock_winreg}):
+            with self.assertRaises(OSError):
+                HWIDGenerator.get_hwid()
+
+    @patch("platform.system", return_value="Windows")
+    @patch("subprocess.check_output", return_value=b"CPU123\nVOL456")
+    def test_registry_query_failure_raises(self, _mock_check_output, _mock_platform):
+        # Key opens but MachineGuid value is missing
+        mock_winreg = MagicMock()
+        mock_winreg.QueryValueEx.side_effect = OSError("Value not found")
+        with patch.dict("sys.modules", {"winreg": mock_winreg}):
+            with self.assertRaises(OSError):
+                HWIDGenerator.get_hwid()
+
 
 class TestHwidGeneratorLinuxFailures(TestCase):
     @patch("platform.system", return_value="Linux")
