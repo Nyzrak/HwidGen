@@ -79,7 +79,7 @@ class HWIDGenerator:
 
         primary_disk = (
             subprocess.check_output(
-                'lsblk -o NAME,TYPE -dn | awk \'$2=="disk" {print "/dev/"$1; exit}\'',
+                'lsblk -rno NAME,TYPE -s $(findmnt -n -o SOURCE /) | awk \'$2=="disk" {print "/dev/"$1; exit}\'',
                 shell=True,
             )
             .strip()
