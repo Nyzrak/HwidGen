@@ -2,6 +2,7 @@ from hashlib import sha256
 from src.HwidGenerator import HWIDGenerator
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
+from subprocess import CalledProcessError
 
 
 class TestHwidGeneratorWindows(TestCase):
@@ -70,6 +71,103 @@ class TestHwidGeneratorLinux(TestCase):
         self.assertEqual(len(hwid), 64)
         self.assertRegex(hwid, r"^[0-9a-f]{64}$")
         self.assertEqual(expected, hwid)
+
+
+class TestHwidGeneratorMacFailures(TestCase):
+    IOREG_OUTPUT = (
+        b'      "IOPlatformUUID" = "UUID-1234"\n'
+        b'      "IOPlatformSerialNumber" = "SN-ABCD"\n'
+    )
+
+    @patch("platform.system", return_value="Darwin")
+    @patch("subprocess.check_output")
+    def test_ioreg_missing_uuid_field_raises(self, mock_check_output, _mock_platform):
+        # ioreg output lacks IOPlatformUUID — regex returns None, .group(1) crashes
+        mock_check_output.side_effect = [
+            b'      "IOPlatformSerialNumber" = "SN-ABCD"\n',
+            b"   Volume UUID:               VOL-UUID-5678",
+        ]
+        with self.assertRaises(AttributeError):
+            HWIDGenerator.get_hwid()
+
+    @patch("platform.system", return_value="Darwin")
+    @patch("subprocess.check_output")
+    def test_ioreg_missing_serial_field_raises(self, mock_check_output, _mock_platform):
+        # ioreg output lacks IOPlatformSerialNumber — same crash
+        mock_check_output.side_effect = [
+            b'      "IOPlatformUUID" = "UUID-1234"\n',
+            b"   Volume UUID:               VOL-UUID-5678",
+        ]
+        with self.assertRaises(AttributeError):
+            HWIDGenerator.get_hwid()
+
+    @patch("platform.system", return_value="Darwin")
+    @patch("subprocess.check_output")
+    def test_diskutil_empty_output_raises(self, mock_check_output, _mock_platform):
+        # diskutil returns nothing (e.g. encrypted volume, edge case hardware)
+        # .split()[-1] on an empty list raises IndexError
+        mock_check_output.side_effect = [
+            self.IOREG_OUTPUT,
+            b"",
+        ]
+        with self.assertRaises(IndexError):
+            HWIDGenerator.get_hwid()
+
+    @patch("platform.system", return_value="Darwin")
+    @patch("subprocess.check_output", side_effect=CalledProcessError(1, "ioreg"))
+    def test_ioreg_command_failure_raises(self, _mock_check_output, _mock_platform):
+        with self.assertRaises(CalledProcessError):
+            HWIDGenerator.get_hwid()
+
+    @patch("platform.system", return_value="Darwin")
+    @patch("subprocess.check_output")
+    def test_diskutil_command_failure_raises(self, mock_check_output, _mock_platform):
+        mock_check_output.side_effect = [
+            self.IOREG_OUTPUT,
+            CalledProcessError(1, "diskutil"),
+        ]
+        with self.assertRaises(CalledProcessError):
+            HWIDGenerator.get_hwid()
+
+
+class TestHwidGeneratorWindowsFailures(TestCase):
+    @patch("platform.system", return_value="Windows")
+    @patch("subprocess.check_output", return_value=b"ONLY_ONE_LINE")
+    def test_powershell_truncated_output_raises(self, _mock_check_output, _mock_platform):
+        # PowerShell returns fewer lines than expected — output[1] raises IndexError
+        mock_winreg = MagicMock()
+        with patch.dict("sys.modules", {"winreg": mock_winreg}):
+            with self.assertRaises(IndexError):
+                HWIDGenerator.get_hwid()
+
+    @patch("platform.system", return_value="Windows")
+    @patch("subprocess.check_output", side_effect=CalledProcessError(1, "powershell"))
+    def test_powershell_command_failure_raises(self, _mock_check_output, _mock_platform):
+        mock_winreg = MagicMock()
+        with patch.dict("sys.modules", {"winreg": mock_winreg}):
+            with self.assertRaises(CalledProcessError):
+                HWIDGenerator.get_hwid()
+
+
+class TestHwidGeneratorLinuxFailures(TestCase):
+    @patch("platform.system", return_value="Linux")
+    @patch(
+        "subprocess.check_output",
+        side_effect=CalledProcessError(1, "cat /etc/machine-id"),
+    )
+    def test_machine_id_missing_raises(self, _mock_check_output, _mock_platform):
+        with self.assertRaises(CalledProcessError):
+            HWIDGenerator.get_hwid()
+
+    @patch("platform.system", return_value="Linux")
+    @patch("subprocess.check_output")
+    def test_lsblk_command_failure_raises(self, mock_check_output, _mock_platform):
+        mock_check_output.side_effect = [
+            b"abcdef1234567890abcdef1234567890",  # machine-id succeeds
+            CalledProcessError(1, "lsblk"),       # disk detection fails
+        ]
+        with self.assertRaises(CalledProcessError):
+            HWIDGenerator.get_hwid()
 
 
 class TestHwidGeneratorUnsupportedOS(TestCase):
