@@ -18,7 +18,9 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install -r requirements/requirements_dev.txt
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -r requirements/requirements_dev.txt
 
       - name: Run CI
         run: make ci
